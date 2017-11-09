@@ -37,16 +37,33 @@ public enum AnimationDirection {
 }
 
 open class JDropDownAlert: UIButton {
-  
   // default values
   // You can change this values to customize
-  open var height: CGFloat = 70
+  open var height: CGFloat = 50.0
+  private var displayHieght: CGFloat {
+    return height + (automaticallyInset ? topOffset + bottomOffset : 0.0)
+  }
   open var duration = 0.3
   open var delay: Double = 2.0
+  open var automaticallyInset: Bool = true
   
   fileprivate var titleFrame: CGRect!
   fileprivate var topLabel = UILabel()
   fileprivate var messageLabel = UILabel()
+  private var topOffset: CGFloat {
+    if #available(iOS 11.0, *) {
+      return safeAreaInsets.top
+    } else {
+      return statusBarHeight
+    }
+  }
+  private var bottomOffset: CGFloat {
+    if #available(iOS 11.0, *) {
+      return safeAreaInsets.bottom
+    } else {
+      return 0
+    }
+  }
   
   open var position = AlertPosition.top
   open var direction = AnimationDirection.normal
@@ -140,11 +157,11 @@ open class JDropDownAlert: UIButton {
     let frame: CGRect
     switch direction {
     case .toRight:
-      frame = CGRect(x: -screenWidth, y: 0.0, width: screenWidth, height: height)
+      frame = CGRect(x: -screenWidth, y: 0.0, width: screenWidth, height: displayHieght)
     case .toLeft:
-      frame = CGRect(x: screenWidth, y: 0.0, width: screenWidth, height: height)
+      frame = CGRect(x: screenWidth, y: 0.0, width: screenWidth, height: displayHieght)
     case .normal:
-      frame = CGRect(x: 0.0, y: -height, width: screenWidth, height: height)
+      frame = CGRect(x: 0.0, y: -displayHieght, width: screenWidth, height: displayHieght)
     }
     return frame
   }
@@ -153,11 +170,11 @@ open class JDropDownAlert: UIButton {
     let frame: CGRect
     switch direction {
     case .toRight:
-      frame = CGRect(x: -screenWidth, y: screenHeight - height, width: screenWidth, height: height)
+      frame = CGRect(x: -screenWidth, y: screenHeight - displayHieght, width: screenWidth, height: displayHieght)
     case .toLeft:
-      frame = CGRect(x: screenWidth, y: screenHeight - height, width: screenWidth, height: height)
+      frame = CGRect(x: screenWidth, y: screenHeight - displayHieght, width: screenWidth, height: displayHieght)
     case .normal:
-      frame = CGRect(x: 0.0, y: screenHeight + height, width: screenWidth, height: height)
+      frame = CGRect(x: 0.0, y: screenHeight + displayHieght, width: screenWidth, height: displayHieght)
     }
     return frame
   }
@@ -177,17 +194,17 @@ open class JDropDownAlert: UIButton {
   @objc fileprivate func show(_ title: String, message: String?, topLabelColor: UIColor, messageLabelColor: UIColor, backgroundColor: UIColor?) {
     
     addWindowSubview(self)
+    self.frame = getFrameBy(position, direction: direction)
     configureProperties(title, message: message, topLabelColor: topLabelColor, messageLabelColor: messageLabelColor, backgroundColor: backgroundColor)
     
     UIView.animate(withDuration: self.duration, animations: {
-      
       switch self.direction {
       case .toRight:
         self.frame.origin.x = 0
       case .toLeft:
         self.frame.origin.x = 0
       case .normal:
-				self.frame.origin.y = self.position == .top ? 0 : self.screenHeight-self.height
+				self.frame.origin.y = self.position == .top ? 0 : self.screenHeight-self.displayHieght
       }
     })
     perform(#selector(hide), with: self, afterDelay: self.delay)
@@ -203,7 +220,7 @@ open class JDropDownAlert: UIButton {
       case .toLeft:
         self.frame.origin.x = self.screenWidth
       case .normal:
-        (self.position == .top) ? (alertView.frame.origin.y = -self.height) : (alertView.frame.origin.y = self.screenHeight)
+        (self.position == .top) ? (alertView.frame.origin.y = -self.displayHieght) : (alertView.frame.origin.y = self.screenHeight)
       }
     })
     
@@ -239,10 +256,10 @@ open class JDropDownAlert: UIButton {
       messageLabel.text = message
     }else {
       messageLabel.isHidden = true
-      topLabel.frame.origin.y = height/2
+      topLabel.frame.origin.y = displayHieght/2
       
       if self.position == .bottom {
-        topLabel.frame.origin.y = height/2 - topLabel.frame.height/2
+        topLabel.frame.origin.y = displayHieght/2 - topLabel.frame.height/2
       }
     }
     
